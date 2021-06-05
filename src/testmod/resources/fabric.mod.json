@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "json_to_brigadier_minecraft",
+  "id": "json_to_brigadier_minecraft_test",
   "version": "${version}",
 
-  "name": "JSON To Brigadier: Minecraft",
+  "name": "JSON To Brigadier: Minecraft Test",
   "description": "This is a library that converts commands to and from JSON",
   "authors": [
     "OroArmor"
@@ -19,17 +19,12 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "com.oroarmor.json.brigadier.minecraft.Mod"
+      "com.oroarmor.json.brigadier.minecraft.TestMod"
     ]
   },
-  "mixins": [
-    "json_to_brigadier_minecraft.mixins.json"
-  ],
 
   "depends": {
     "fabricloader": ">=0.11.3",
     "java": "16+"
-  },
-
-  "accessWidener": "json-to-brigadier-minecraft.accesswidener"
+  }
 }

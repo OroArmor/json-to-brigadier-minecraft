@@ -22,12 +22,15 @@
  * SOFTWARE.
  */
 
-package com.oroarmor.oro_mod_template;
+package com.oroarmor.json.brigadier.minecraft.mixin;
 
-import net.fabricmc.api.ModInitializer;
+import net.minecraft.command.argument.Vec2ArgumentType;
+import net.minecraft.command.argument.Vec3ArgumentType;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
 
-public class Mod implements ModInitializer {
-	@Override
-	public void onInitialize() {
-	}
+@Mixin(Vec3ArgumentType.class)
+public interface Vec3ArgumentTypeAccessor {
+    @Accessor
+    boolean getCenterIntegers();
 }

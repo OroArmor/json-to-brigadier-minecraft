@@ -1,0 +1,7 @@
+{
+  "name": "test",
+  "argument": {
+    "type": "brigadier:literal"
+  },
+  "executes": "com.oroarmor.json.brigadier.minecraft.TestMod::runTestCommand"
+}

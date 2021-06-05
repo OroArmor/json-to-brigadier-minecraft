@@ -1,6 +1,4 @@
-Version 1.1.0
-- Automatic changelogs
-- Include Oro-Config in dependencies
-----
 Version 1.0.0
-- Initial template
+- Create Mod
+- Convert JSON into Minecraft commands
+- Convert Minecraft commands into JSON

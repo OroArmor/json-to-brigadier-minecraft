@@ -8,25 +8,31 @@ buildscript {
         classpath "gradle.plugin.com.matthewprenger:CurseGradle:1.4.0"
         classpath "org.kohsuke:github-api:1.114"
         classpath "gradle.plugin.com.modrinth.minotaur:Minotaur:1.1.0"
+        classpath "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.30.0"
     }
 }
 
 plugins {
-    id 'fabric-loom' version '0.6-SNAPSHOT'
+    id 'fabric-loom' version '0.8-SNAPSHOT'
+    id "java-library"
     id 'maven-publish'
     id 'org.cadixdev.licenser' version '0.5.0'
     id "signing"
-    id "maven"
     id "com.modrinth.minotaur" version "1.1.0"
     id "com.matthewprenger.cursegradle" version "1.4.0"
 }
+apply plugin: 'io.codearte.nexus-staging'
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
 
 archivesBaseName = project.archives_base_name
 version = project.mod_version
 group = project.maven_group
+
+minecraft {
+    accessWidener = file("src/main/resources/json-to-brigadier-minecraft.accesswidener")
+}
 
 repositories {
     mavenCentral()
@@ -52,6 +58,30 @@ license {
     header = rootProject.file("LICENSE")
 }
 
+sourceSets {
+    testmod {
+        compileClasspath += main.compileClasspath
+        runtimeClasspath += main.runtimeClasspath
+    }
+}
+
+loom {
+    runs {
+        testmodClient {
+            client()
+            ideConfigGenerated project.rootProject == project
+            name = "Testmod Client"
+            source sourceSets.testmod
+        }
+        testmodServer {
+            server()
+            ideConfigGenerated project.rootProject == project
+            name = "Testmod Server"
+            source sourceSets.testmod
+        }
+    }
+}
+
 dependencies {
     // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -60,8 +90,9 @@ dependencies {
 
     // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    implementation "com.google.code.gson:gson:2.8.7"
 
-    modImplementation(include("com.oroarmor:oro-config-fabric:2.0.0"))
+    include(modApi("com.oroarmor:json-to-brigadier:1.2.0"))
 }
 
 processResources {
@@ -73,16 +104,9 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    // ensure that the encoding is set to UTF-8, no matter what the system default is
-    // this fixes some edge cases with special characters not displaying correctly
-    // see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
-    // If Javadoc is generated, this must be specified in that task too.
     it.options.encoding = "UTF-8"
 
-    // The Minecraft launcher currently installs Java 8 for users, so your mod probably wants to target Java 8 too
-    // JDK 9 introduced a new way of specifying this that will make sure no newer classes or methods are used.
-    // We'll use that if it's available, but otherwise we'll use the older option.
-    def targetVersion = 8
+    def targetVersion = 16
     if (JavaVersion.current().isJava9Compatible()) {
         it.options.release = targetVersion
     }
@@ -93,6 +117,14 @@ java {
     // if it is present.
     // If you remove this line, sources will not be generated.
     withSourcesJar()
+}
+
+javadoc {
+    options {
+        links ("https://www.javadoc.io/doc/com.google.code.gson/gson/2.8.7",
+                "https://docs.oracle.com/en/java/javase/16/docs/api/")
+    }
+    failOnError false
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
@@ -110,54 +142,65 @@ artifacts {
     archives jar, sourcesJar, javadocJar
 }
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            def ossrhUsername = "OroArmor"
-            def ossrhPassword = project.hasProperty("ossrhPassword") ? project.property("ossrhPassword") : System.getenv("OSSRH_PASSWORD")
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact jar
+            artifact sourcesJar
+            artifact javadocJar
 
-            beforeDeployment {
-                MavenDeployment deployment -> signing.signPom(deployment)
-            }
-
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-            pom.project {
-                name 'Oro Mod Template'
-                packaging 'jar'
+            pom {
+                name = 'Json To Brigadier Minecraft'
+                packaging = 'jar'
                 // optionally artifactId can be defined here
-                description 'This is a template mod for OroArmor.'
-                url 'http://github.com/OroArmor/oro-mod-template'
+                description = 'This is a template mod for OroArmor.'
+                url = 'http://github.com/OroArmor/json-to-brigadier-minecraft'
 
                 scm {
-                    connection 'scm:git:git://github.com/OroArmor/oro-mod-template.git'
-                    developerConnection 'scm:git:ssh://github.com:OroArmor/oro-mod-template.git'
-                    url 'http://github.com/OroArmor/oro-mod-template'
+                    connection = 'scm:git:git://github.com/OroArmor/json-to-brigadier-minecraft.git'
+                    developerConnection = 'scm:git:ssh://github.com:OroArmor/json-to-brigadier-minecraft.git'
+                    url = 'http://github.com/OroArmor/json-to-brigadier-minecraft'
                 }
 
                 licenses {
                     license {
-                        name 'MIT'
-                        url 'https://mit-license.org/'
+                        name = 'MIT'
+                        url = 'https://mit-license.org/'
                     }
                 }
 
                 developers {
                     developer {
-                        id 'OroArmor'
-                        name 'Eli Orona'
-                        email 'eliorona@live.com'
-                        url "oroarmor.com"
+                        id = 'OroArmor'
+                        name = 'Eli Orona'
+                        email = 'eliorona@live.com'
+                        url = "oroarmor.com"
                     }
                 }
             }
         }
     }
+
+    repositories {
+        def ossrhUsername = "OroArmor"
+        def ossrhPassword = (project.hasProperty("ossrhPassword") ? project.property("ossrhPassword") : System.getenv("OSSRH_PASSWORD")) as String
+        mavenLocal()
+        maven {
+            def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+            credentials(PasswordCredentials) {
+                username = ossrhUsername
+                password = ossrhPassword
+            }
+            name = "mavenCentral"
+        }
+    }
+}
+
+nexusStaging {
+    username = "OroArmor"
+    password = project.hasProperty("ossrhPassword") ? project.property("ossrhPassword") : System.getenv("OSSRH_PASSWORD")
 }
 
 curseforge {
@@ -175,7 +218,7 @@ curseforge {
 //				requiredDependency "fabric-api"
 //			}
             mainArtifact(remapJar.archivePath) {
-                displayName = "Oro Mod Template - $rootProject.mod_version"
+                displayName = "Json To Brigadier Minecraft - $rootProject.mod_version"
             }
             afterEvaluate {
                 uploadTask.dependsOn("build")
@@ -207,7 +250,7 @@ task github {
 
     doLast {
         def github = org.kohsuke.github.GitHub.connectUsingOAuth(System.getenv().GITHUB_TOKEN as String)
-        def repository = github.getRepository("OroArmor/oro-mod-template")
+        def repository = github.getRepository("OroArmor/json-to-brigadier-minecraft")
 
         def releaseBuilder = new org.kohsuke.github.GHReleaseBuilder(repository, project.mod_version)
         releaseBuilder.name("$project.project_name $project.mod_version for $project.minecraft_version")
@@ -228,7 +271,7 @@ task generateChangelog {
             contents += line + "\n"
     }
 
-    def changelogs = contents.split("\\-\\-\\-\\-")
+    def changelogs = contents.split("----")
     project.ext.changelog = changelogs.find { log -> log.contains(project.version) }
     println project.ext.changelog
 }

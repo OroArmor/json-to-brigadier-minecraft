@@ -208,7 +208,7 @@ curseforge {
         project {
             id = project.curseforge_id
             releaseType = "release"
-            project.game_versions.split(",").each { String game_version -> addGameVersion game_version }
+            project.curseforge_game_versions.split(",").each { String game_version -> addGameVersion game_version }
             addGameVersion "Fabric"
 
             changelogType = "html"
@@ -238,7 +238,7 @@ task publishToModrinth(type: TaskModrinthUpload) {
     versionNumber = project.version
     uploadFile = remapJar.archivePath // This is the java jar task
     changelog = project.ext.changelog
-    project.game_versions.split(",").each { String game_version -> addGameVersion(game_version) }
+    project.modrinth_game_versions.split(",").each { String game_version -> addGameVersion(game_version) }
     addLoader('fabric')
 }
 

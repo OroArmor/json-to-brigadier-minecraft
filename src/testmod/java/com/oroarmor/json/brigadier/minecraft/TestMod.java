@@ -25,23 +25,26 @@
 package com.oroarmor.json.brigadier.minecraft;
 
 import com.google.gson.GsonBuilder;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.oroarmor.json.brigadier.BrigadierToJson;
 import com.oroarmor.json.brigadier.JsonToBrigadier;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.loader.api.FabricLoader;
+
+import net.minecraft.command.argument.EntityArgumentType;
+import net.minecraft.entity.Entity;
+import net.minecraft.item.Items;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
-import org.apache.logging.log4j.core.jmx.Server;
+import net.minecraft.util.Hand;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.ExecutionException;
 
 public class TestMod implements ModInitializer {
     @Override
@@ -49,7 +52,8 @@ public class TestMod implements ModInitializer {
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
             try {
                 dispatcher.register((LiteralArgumentBuilder<ServerCommandSource>) JsonToBrigadier.<ServerCommandSource, LiteralArgumentBuilder<ServerCommandSource>>parse(
-                        Path.of((TestMod.class.getClassLoader().getResource("data/test_command.json").toURI()))
+                        Path.of((TestMod.class.getClassLoader().getResource("data/test_command.json").toURI())),
+                        ServerCommandSource.class
                 ));
             } catch (URISyntaxException e) {
                 e.printStackTrace();
@@ -70,5 +74,15 @@ public class TestMod implements ModInitializer {
     public static int runTestCommand(CommandContext<ServerCommandSource> context) {
         context.getSource().sendFeedback(new LiteralText("Successful!"), true);
         return 1;
+    }
+
+    public static int runTestCommandEntity(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+        Entity entity = EntityArgumentType.getEntity(context, "select");
+        context.getSource().sendFeedback(new LiteralText("Successful!" + entity.toString()), true);
+        return 1;
+    }
+
+    public static boolean isValidUser(ServerCommandSource source) throws CommandSyntaxException {
+        return true;
     }
 }

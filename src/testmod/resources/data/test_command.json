@@ -3,5 +3,15 @@
   "argument": {
     "type": "brigadier:literal"
   },
-  "executes": "com.oroarmor.json.brigadier.minecraft.TestMod::runTestCommand"
+  "requires": "com.oroarmor.json.brigadier.minecraft.TestMod::isValidUser",
+  "executes": "com.oroarmor.json.brigadier.minecraft.TestMod::runTestCommand",
+  "children": [
+    {
+      "name": "select",
+      "argument": {
+        "type": "minecraft:entity"
+      },
+      "executes": "com.oroarmor.json.brigadier.minecraft.TestMod::runTestCommandEntity"
+    }
+  ]
 }

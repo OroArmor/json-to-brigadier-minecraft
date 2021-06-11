@@ -50,7 +50,9 @@ tasks.withType(Sign) {
 if (project.hasProperty("sign")) {
     signing {
         useGpgCmd()
-        sign configurations.archives
+        publishing.publications.forEach(publication -> {
+            sign publication
+        })
     }
 }
 
@@ -144,7 +146,7 @@ artifacts {
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            artifact jar
+            artifact remapJar
             artifact sourcesJar
             artifact javadocJar
 
